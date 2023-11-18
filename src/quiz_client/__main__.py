@@ -5,26 +5,23 @@ import sys
 
 async def send_receive_messages(uri: str, client_id: str):
     async with connect(uri) as ws:
-        # Task to handle sending messages
         send_task = asyncio.create_task(send_messages(ws, client_id))
-        
-        # Task to handle receiving messages
         receive_task = asyncio.create_task(receive_messages(ws))
-
-        # Wait for both tasks to complete
         await asyncio.gather(send_task, receive_task)
 
 
-async def send_messages(ws: WebSocketClientProtocol, client_id):
+async def send_messages(ws: WebSocketClientProtocol, client_id: str):
     while True:
-        user_input = await aioconsole.ainput(f"Client {client_id}:\n")
+        user_input = await aioconsole.ainput(f"Client {client_id}: ")
+        if not user_input:
+            continue
         await ws.send(f"{client_id}: {user_input}")
 
 
 async def receive_messages(ws: WebSocketClientProtocol):
     while True:
         response = await ws.recv()
-        print(f"Received from server: {response}")
+        print(f"\nReceived from server: {response}")
 
 
 def main():
