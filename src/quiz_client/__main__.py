@@ -3,6 +3,9 @@ from websockets import connect, WebSocketClientProtocol
 from websockets.exceptions import ConnectionClosedError
 import aioconsole
 import sys
+import json
+import string
+
 
 async def send_receive_messages(uri: str, client_id: str):
     async with connect(uri) as ws:
@@ -23,7 +26,19 @@ async def send_messages(ws: WebSocketClientProtocol, client_id: str):
 async def receive_messages(ws: WebSocketClientProtocol):
     while True:
         response = await ws.recv()
-        print(f"{response}")
+        message = json.loads(response)
+        if isinstance(message, dict):
+            print_question(message)
+        else:
+            print(message)
+
+
+def print_question(question: dict[str, list]):
+    '''Nicely print text of the question with possible answeres'''
+
+    print(question['text'])
+    for letter, opt in zip(string.ascii_letters, question['options']):
+        print(f'\t{letter}) {opt}')
 
 
 def main():
@@ -36,7 +51,8 @@ def main():
 
     print("Press Ctrl+C to exit")
     try:
-        asyncio.get_event_loop().run_until_complete(send_receive_messages(server_uri, client_id))
+        asyncio.get_event_loop().run_until_complete(
+            send_receive_messages(server_uri, client_id))
     except ConnectionClosedError:
         print("\nConnection closed")
         sys.exit()
