@@ -17,7 +17,7 @@ async def send_receive_messages(uri: str, client_id: str):
 
 async def send_messages(ws: WebSocketClientProtocol, client_id: str):
     while True:
-        user_input = await aioconsole.ainput(f"\nClient {client_id}: ")
+        user_input = await aioconsole.ainput()
         if not user_input:
             continue
         await ws.send(f"{client_id}: {user_input}")
@@ -31,6 +31,7 @@ async def receive_messages(ws: WebSocketClientProtocol):
             print_question(message)
         else:
             print(message)
+        print(f"Answer:")
 
 
 def print_question(question: dict[str, list]):
@@ -59,7 +60,3 @@ def main():
     except KeyboardInterrupt:
         print("\nExit client")
         sys.exit()
-
-
-if __name__ == "__main__":
-    main()
