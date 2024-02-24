@@ -1,6 +1,6 @@
 import asyncio
 from websockets import connect, WebSocketClientProtocol
-from websockets.exceptions import ConnectionClosedError
+from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
 import aioconsole
 import sys
 import json
@@ -18,45 +18,50 @@ async def send_receive_messages(uri: str, client_id: str):
 async def send_messages(ws: WebSocketClientProtocol, client_id: str):
     while True:
         user_input = await aioconsole.ainput()
-        if not user_input:
-            continue
-        await ws.send(f"{client_id}: {user_input}")
+        if user_input:
+            await ws.send({client_id: user_input})
 
 
 async def receive_messages(ws: WebSocketClientProtocol):
     while True:
         response = await ws.recv()
         message = json.loads(response)
-        if isinstance(message, dict):
+
+        if message.get('type') == 'question':
             print_question(message)
         else:
-            print(message)
-        print(f"Answer:")
+            print(message['text'])
 
 
 def print_question(question: dict[str, list]):
     '''Nicely print text of the question with possible answeres'''
 
-    print(question['text'])
+    print(f"Question: {question['text']}")
     for letter, opt in zip(string.ascii_letters, question['options']):
         print(f'\t{letter}) {opt}')
+    print("Answer:")
 
 
 def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <client_id>")
-        sys.exit(1)
+    if len(sys.argv) not in (2, 3):
+        sys.exit(f"Usage: {sys.argv[0]} <url> [<client_id>]")
+    elif len(sys.argv) == 3:
+        client_id = sys.argv[2]
+    else:
+        client_id = input("Pick you name: ")
 
-    client_id = sys.argv[1]
-    server_uri = f"ws://127.0.0.1:8000/register/{client_id}"
+    server_url = sys.argv[1]
+    server_uri = f"ws://{server_url}/register/{client_id}"
 
-    print("Press Ctrl+C to exit")
     try:
         asyncio.get_event_loop().run_until_complete(
             send_receive_messages(server_uri, client_id))
+    except OSError:
+        sys.exit("Client: cannot reach server")
+    except ConnectionClosedOK as e:
+        print(e.reason)
     except ConnectionClosedError:
-        print("\nConnection closed")
-        sys.exit()
+        print("Client: connection closed")
     except KeyboardInterrupt:
-        print("\nExit client")
+        print("\nClient: exit")
         sys.exit()
