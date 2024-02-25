@@ -19,7 +19,7 @@ async def send_messages(ws: WebSocketClientProtocol, client_id: str):
     while True:
         user_input = await aioconsole.ainput()
         if user_input:
-            await ws.send({client_id: user_input})
+            await ws.send(json.dumps({client_id: user_input}))
 
 
 async def receive_messages(ws: WebSocketClientProtocol):
@@ -50,18 +50,17 @@ def main():
     else:
         client_id = input("Pick you name: ")
 
-    server_url = sys.argv[1]
-    server_uri = f"ws://{server_url}/register/{client_id}"
+    server_url = f"ws://{sys.argv[1]}/register/{client_id}"
 
     try:
         asyncio.get_event_loop().run_until_complete(
-            send_receive_messages(server_uri, client_id))
+            send_receive_messages(server_url, client_id))
     except OSError:
         sys.exit("Client: cannot reach server")
     except ConnectionClosedOK as e:
         print(e.reason)
     except ConnectionClosedError:
-        print("Client: connection closed")
+        print("Client: server disconected")
     except KeyboardInterrupt:
         print("\nClient: exit")
         sys.exit()
