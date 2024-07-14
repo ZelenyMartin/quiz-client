@@ -19,7 +19,7 @@ async def send_messages(ws: WebSocketClientProtocol, client_id: str):
     while True:
         user_input = await aioconsole.ainput()
         if user_input:
-            await ws.send(json.dumps({client_id: user_input}))
+            await ws.send(json.dumps({"client_id": client_id, "answer": user_input}))
 
 
 async def receive_messages(ws: WebSocketClientProtocol):
@@ -27,18 +27,21 @@ async def receive_messages(ws: WebSocketClientProtocol):
         response = await ws.recv()
         message = json.loads(response)
 
-        if message.get('type') == 'question':
-            print_question(message)
-        else:
-            print(message['text'])
+        match message.get("type"):
+            case 'question':
+                print_question(message)
+            case 'repeat':
+                print(f"You answered: {message['text']}")
+            case _:
+                print(message['text'])
 
 
 def print_question(question: dict[str, list]):
-    '''Nicely print text of the question with possible answeres'''
+    """Nicely print text of the question with possible answeres"""
 
     print(f"Question: {question['text']}")
-    for letter, opt in zip(string.ascii_letters, question['options']):
-        print(f'\t{letter}) {opt}')
+    for letter, opt in zip(string.ascii_letters, question["options"]):
+        print(f"\t{letter}) {opt}")
     print("Answer:")
 
 
@@ -50,11 +53,12 @@ def main():
     else:
         client_id = input("Pick you name: ")
 
-    server_url = f"ws://{sys.argv[1]}/register/{client_id}"
+    server_url = f"ws://{sys.argv[1]}/connect/{client_id}"
 
     try:
         asyncio.get_event_loop().run_until_complete(
-            send_receive_messages(server_url, client_id))
+            send_receive_messages(server_url, client_id)
+        )
     except OSError:
         sys.exit("Client: cannot reach server")
     except ConnectionClosedOK as e:
