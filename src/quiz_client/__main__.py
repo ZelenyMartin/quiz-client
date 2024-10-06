@@ -1,17 +1,18 @@
 import asyncio
-from websockets import connect, WebSocketClientProtocol
-from websockets.exceptions import ConnectionClosedOK, ConnectionClosedError
-import aioconsole
-import sys
 import json
 import string
+import sys
+
+import aioconsole
+from websockets import WebSocketClientProtocol, connect
+from websockets.exceptions import ConnectionClosedError, ConnectionClosedOK
 
 
 async def send_receive_messages(uri: str, client_id: str):
     async with connect(uri) as ws:
         await asyncio.gather(
             asyncio.create_task(send_messages(ws, client_id)),
-            asyncio.create_task(receive_messages(ws))
+            asyncio.create_task(receive_messages(ws)),
         )
 
 
@@ -28,12 +29,12 @@ async def receive_messages(ws: WebSocketClientProtocol):
         message = json.loads(response)
 
         match message.get("type"):
-            case 'question':
+            case "question":
                 print_question(message)
-            case 'repeat':
+            case "repeat":
                 print(f"You answered: {message['text']}")
             case _:
-                print(message['text'])
+                print(message["text"])
 
 
 def print_question(question: dict[str, list]):
