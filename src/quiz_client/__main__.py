@@ -52,7 +52,7 @@ def main():
     elif len(sys.argv) == 3:
         client_id = sys.argv[2]
     else:
-        client_id = input("Pick you name: ")
+        client_id = input("Choose your name: ")
 
     server_url = f"ws://{sys.argv[1]}/connect/{client_id}"
 
